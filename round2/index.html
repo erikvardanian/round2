@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="hy">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ՓՈՒԼ 2</title>
+  <link rel="stylesheet" href="style.css?v=3">
+</head>
+<body>
+
+  <!-- Decorative background: soft flowing lines, dots, faint circuit traces -->
+  <svg class="bg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <defs>
+      <linearGradient id="bgLine" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#149DFF" stop-opacity="0"/>
+        <stop offset=".5" stop-color="#45D9FF" stop-opacity=".35"/>
+        <stop offset="1" stop-color="#7255D9" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <g fill="none" stroke="url(#bgLine)" stroke-width="1.2">
+      <path class="flow f1" d="M-100 820 C 300 640, 620 980, 1000 760 S 1600 560, 2040 700"/>
+      <path class="flow f2" d="M-100 240 C 260 380, 700 80, 1080 260 S 1620 420, 2040 180"/>
+      <path class="flow f3" d="M-100 520 C 400 420, 700 640, 1200 500 S 1700 360, 2040 480"/>
+    </g>
+    <g fill="none" stroke="#45D9FF" stroke-opacity=".10" stroke-width="1.2" stroke-linecap="round">
+      <path d="M60 120 h120 v60 h90"/><circle cx="270" cy="180" r="4" fill="#45D9FF" fill-opacity=".25"/>
+      <path d="M1860 960 h-140 v-70 h-100"/><circle cx="1620" cy="890" r="4" fill="#45D9FF" fill-opacity=".25"/>
+      <path d="M40 980 h90 v-80 h70 v-50"/><circle cx="200" cy="850" r="4" fill="#45D9FF" fill-opacity=".25"/>
+      <path d="M1880 140 h-110 v80 h-80"/><circle cx="1690" cy="220" r="4" fill="#45D9FF" fill-opacity=".25"/>
+    </g>
+    <g class="dots" fill="#7FB8FF" fill-opacity=".22">
+      <circle cx="160" cy="420" r="2"/><circle cx="220" cy="470" r="1.6"/><circle cx="120" cy="540" r="2"/>
+      <circle cx="1780" cy="400" r="2"/><circle cx="1830" cy="480" r="1.6"/><circle cx="1740" cy="560" r="2"/>
+      <circle cx="900" cy="1040" r="2"/><circle cx="1000" cy="1050" r="1.6"/><circle cx="820" cy="1030" r="1.6"/>
+      <circle cx="700" cy="40" r="2"/><circle cx="1200" cy="30" r="1.6"/><circle cx="1320" cy="52" r="2"/>
+    </g>
+  </svg>
+
+  <header class="top">
+    <div class="round">ՓՈՒԼ 2</div>
+    <nav class="tools" aria-label="Խաղի կառավարում">
+      <button class="btn ghost" id="btnFullscreen" type="button">Ամբողջ էկրան</button>
+      <button class="btn accent" id="btnReveal" type="button">Բացել նկարը</button>
+      <button class="btn ghost" id="btnReset" type="button">Վերսկսել</button>
+    </nav>
+  </header>
+
+  <main class="stage">
+    <!-- Board coordinate system: puzzle occupies (0,0)-(1500,900); margin holds the frame -->
+    <svg id="board" viewBox="-16 -16 1532 932" preserveAspectRatio="xMidYMid meet" role="group" aria-label="Հանելուկ">
+      <defs>
+        <linearGradient id="boardGrad" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="1500" y2="900">
+          <stop offset="0" stop-color="#12408A"/>
+          <stop offset=".45" stop-color="#0D2E66"/>
+          <stop offset=".78" stop-color="#14306F"/>
+          <stop offset="1" stop-color="#2A2272"/>
+        </linearGradient>
+        <radialGradient id="hl" cx=".5" cy=".5" r=".5">
+          <stop offset="0" stop-color="#6FC2FF" stop-opacity=".20"/>
+          <stop offset="1" stop-color="#6FC2FF" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="hlp" cx=".5" cy=".5" r=".5">
+          <stop offset="0" stop-color="#7255D9" stop-opacity=".28"/>
+          <stop offset="1" stop-color="#7255D9" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="frameGrad" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#45D9FF" stop-opacity=".7"/>
+          <stop offset=".5" stop-color="#149DFF" stop-opacity=".25"/>
+          <stop offset="1" stop-color="#7255D9" stop-opacity=".7"/>
+        </linearGradient>
+        <!-- The picture is visible ONLY through this mask; it starts empty, so the picture is
+             completely invisible until a piece is removed. JS adds one <path> per removed piece. -->
+        <mask id="revealMask" maskUnits="userSpaceOnUse" x="-40" y="-40" width="1580" height="980">
+          <g id="maskPaths" fill="#fff" stroke="#fff" stroke-width="3" stroke-linejoin="round"></g>
+        </mask>
+        <g id="clipDefs"></g>
+      </defs>
+
+      <!-- Frame (outside the picture area) -->
+      <rect class="frame" x="-8" y="-8" width="1516" height="916" rx="10" fill="none" stroke="url(#frameGrad)" stroke-width="2.5"/>
+
+      <!-- BOTTOM LAYER: dark backing + the clean picture (masked) -->
+      <rect x="0" y="0" width="1500" height="900" fill="#06152D"/>
+      <g id="imageLayer" mask="url(#revealMask)">
+        <image id="picture" href="assets/trojan-horse.png" x="0" y="0" width="1500" height="900" preserveAspectRatio="xMidYMid slice"/>
+      </g>
+
+      <!-- TOP LAYER: 15 jigsaw pieces (built by app.js) -->
+      <g id="pieces"></g>
+
+      <!-- Effects (particles, flash) -->
+      <g id="fx" pointer-events="none"></g>
+    </svg>
+  </main>
+
+  <!-- Question modal -->
+  <div class="overlay" id="modal" hidden>
+    <section class="card" role="dialog" aria-modal="true" aria-labelledby="qText">
+      <div class="qno">ՀԱՐՑ <b id="qNo">1</b><span> / 15</span></div>
+      <p class="qtext" id="qText"></p>
+      <p class="answer" id="qAnswer" hidden></p>
+
+      <div class="lower">
+        <div class="timer cyan" id="timer">
+          <svg viewBox="0 0 220 220" aria-hidden="true">
+            <circle class="track" cx="110" cy="110" r="94"/>
+            <circle class="ring" id="ring" cx="110" cy="110" r="94"/>
+          </svg>
+          <div class="num" id="timerNum">20</div>
+        </div>
+
+        <div class="side">
+          <div class="timeup" id="timeUp" hidden>ԺԱՄԱՆԱԿԸ ՍՊԱՌՎԵՑ</div>
+          <div class="actions">
+            <button class="btn start" id="btnStart" type="button">▶ Սկսել 20 վրկ</button>
+            <button class="btn good" id="btnCorrect" type="button">✓ ՃԻՇՏ Է</button>
+            <button class="btn bad" id="btnWrong" type="button">✕ Սխալ է</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Reset confirmation -->
+  <div class="overlay" id="confirm" hidden>
+    <section class="card small" role="alertdialog" aria-modal="true" aria-labelledby="confirmText">
+      <p class="qtext" id="confirmText">Վերսկսե՞լ խաղը։ Ամբողջ առաջընթացը կջնջվի։</p>
+      <div class="actions">
+        <button class="btn bad" id="confirmYes" type="button">Այո, վերսկսել</button>
+        <button class="btn ghost" id="confirmNo" type="button">Չեղարկել</button>
+      </div>
+    </section>
+  </div>
+
+  <script src="app.js?v=3"></script>
+</body>
+</html>
